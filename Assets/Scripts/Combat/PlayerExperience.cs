@@ -4,50 +4,58 @@ using System;
 public class PlayerExperience : MonoBehaviour
 {
     [Header("Level")]
-    public int level = 1;
+    public int currentLevel = 1;
 
     [Header("Experience")]
-    public int currentXP = 0;
-    public int xpToNextLevel = 100;
+    public int currentExperience = 0;
+    public int experienceToNextLevel = 100;
 
-    // 🔹 НОВОЕ СОБЫТИЕ
-    public event Action OnXPChanged;
+    [Tooltip("Множитель роста опыта на следующий уровень")]
+    public float experienceGrowthMultiplier = 1.2f;
 
-    // 🔹 СУЩЕСТВУЮЩЕЕ СОБЫТИЕ
-    public event Action<int> OnLevelUp;
+    // 🔹 События (ВАЖНО для UI и эффектов)
+    public event Action OnExperienceChanged;
+    public event Action OnLevelUp;
 
+    /// <summary>
+    /// Добавить опыт (квесты, предметы, зоны и т.д.)
+    /// </summary>
     public void AddExperience(int amount)
     {
         if (amount <= 0) return;
 
-        currentXP += amount;
+        currentExperience += amount;
+        OnExperienceChanged?.Invoke();
 
-        // 🔹 уведомляем UI СРАЗУ
-        OnXPChanged?.Invoke();
-
-        while (currentXP >= xpToNextLevel)
+        // Проверяем ап уровня (может быть несколько сразу)
+        while (currentExperience >= experienceToNextLevel)
         {
-            currentXP -= xpToNextLevel;
             LevelUp();
-
-            // 🔹 XP изменился после сброса
-            OnXPChanged?.Invoke();
         }
     }
 
     private void LevelUp()
     {
-        level++;
-        xpToNextLevel = Mathf.RoundToInt(xpToNextLevel * 1.5f);
-        OnLevelUp?.Invoke(level);
+        currentExperience -= experienceToNextLevel;
+        currentLevel++;
+
+        experienceToNextLevel = Mathf.RoundToInt(
+            experienceToNextLevel * experienceGrowthMultiplier
+        );
+
+        OnLevelUp?.Invoke();
+        OnExperienceChanged?.Invoke();
     }
 
-    public float CurrentXPPercent
+    /// <summary>
+    /// Процент заполнения полоски опыта (0–1)
+    /// </summary>
+    public float CurrentExperiencePercent
     {
         get
         {
-            if (xpToNextLevel <= 0) return 0f;
-            return (float)currentXP / xpToNextLevel;
+            if (experienceToNextLevel <= 0) return 0f;
+            return (float)currentExperience / experienceToNextLevel;
         }
     }
 }
