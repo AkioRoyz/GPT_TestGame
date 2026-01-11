@@ -18,19 +18,41 @@ public class PlayerStats : MonoBehaviour
     [Header("Combat")]
     public int attackPower = 10;
 
+    [Header("Level Up Growth")]
+    [Tooltip("Прирост максимального здоровья за уровень")]
+    public int healthPerLevel = 10;
+
+    [Tooltip("Прирост максимальной маны за уровень")]
+    public int manaPerLevel = 5;
+
+    [Tooltip("Прирост силы атаки за уровень")]
+    public int attackPowerPerLevel = 2;
+
+    [Tooltip("Прирост регенерации здоровья (%) за уровень")]
+    public float healthRegenPerLevel = 0.2f;
+
+    [Tooltip("Прирост регенерации маны (%) за уровень")]
+    public float manaRegenPerLevel = 0.3f;
+
     private Health health;
     private Mana mana;
+    private PlayerExperience experience;
 
     void Awake()
     {
         health = GetComponent<Health>();
         mana = GetComponent<Mana>();
+        experience = GetComponent<PlayerExperience>();
 
         if (health != null)
             health.maxHealth = maxHealth;
 
         if (mana != null)
             mana.maxMana = maxMana;
+
+        // 🔹 Подписка на ап уровня
+        if (experience != null)
+            experience.OnLevelUp += HandleLevelUp;
     }
 
     void Start()
@@ -41,6 +63,37 @@ public class PlayerStats : MonoBehaviour
 
         if (mana != null)
             StartCoroutine(ManaRegenRoutine());
+    }
+
+    private void OnDestroy()
+    {
+        if (experience != null)
+            experience.OnLevelUp -= HandleLevelUp;
+    }
+
+    // 🔹 ОБРАБОТКА ПОВЫШЕНИЯ УРОВНЯ
+    private void HandleLevelUp()
+    {
+        // Увеличиваем характеристики
+        maxHealth += healthPerLevel;
+        maxMana += manaPerLevel;
+        attackPower += attackPowerPerLevel;
+
+        healthRegenPercentPerSecond += healthRegenPerLevel;
+        manaRegenPercentPerSecond += manaRegenPerLevel;
+
+        // Обновляем Health и Mana
+        if (health != null)
+        {
+            health.maxHealth = maxHealth;
+            health.RestoreHealth(maxHealth); // полное восстановление
+        }
+
+        if (mana != null)
+        {
+            mana.maxMana = maxMana;
+            mana.RestoreMana(maxMana); // полное восстановление
+        }
     }
 
     // 🔹 ПАССИВНОЕ ВОССТАНОВЛЕНИЕ ЗДОРОВЬЯ
