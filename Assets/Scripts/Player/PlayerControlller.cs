@@ -1,30 +1,39 @@
 using UnityEngine;
 
+[RequireComponent(typeof(Rigidbody2D))]
+[RequireComponent(typeof(PlayerInputHandler))]
 public class PlayerController : MonoBehaviour
 {
     public float speed = 5f;
+
     private Rigidbody2D rb;
+    private PlayerInputHandler inputHandler;
     private Vector2 moveInput;
 
-    void Awake()
+    private void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
+        inputHandler = GetComponent<PlayerInputHandler>();
+
+        if (inputHandler == null)
+        {
+            Debug.LogError("PlayerInputHandler РЅРµ РЅР°Р№РґРµРЅ РЅР° РѕР±СЉРµРєС‚Рµ Player!");
+            enabled = false; // РћС‚РєР»СЋС‡Р°РµРј СЃРєСЂРёРїС‚, С‡С‚РѕР±С‹ РЅРµ Р±С‹Р»Рѕ NullReference
+        }
     }
 
-    void Update()
+    private void Update()
     {
-        //  Если игра не в Playing — ничего не делаем
         if (GameManager.Instance.CurrentState != GameState.Playing)
         {
             moveInput = Vector2.zero;
             return;
         }
 
-        moveInput.x = Input.GetAxisRaw("Horizontal");
-        moveInput.y = Input.GetAxisRaw("Vertical");
+        moveInput = inputHandler.MoveInput;
     }
 
-    void FixedUpdate()
+    private void FixedUpdate()
     {
         rb.linearVelocity = moveInput.normalized * speed;
     }

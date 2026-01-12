@@ -6,7 +6,9 @@ public class GameManager : MonoBehaviour
 
     public GameState CurrentState;
 
-    void Awake()
+    private PlayerInputHandler inputHandler;
+
+    private void Awake()
     {
         if (Instance == null)
         {
@@ -16,25 +18,48 @@ public class GameManager : MonoBehaviour
         else
         {
             Destroy(gameObject);
+            return;
         }
     }
 
-    void Start()
+    private void Start()
     {
         SetState(GameState.MainMenu);
-    }
 
-    void Update()
-    {
-        if (Input.GetKeyDown(KeyCode.Escape))
+        // »щем PlayerInputHandler в сцене
+        inputHandler = FindFirstObjectByType<PlayerInputHandler>();
+
+        if (inputHandler != null)
         {
-            if (GameManager.Instance.CurrentState == GameState.Playing)
-                GameManager.Instance.SetState(GameState.Paused);
-            else
-                GameManager.Instance.SetState(GameState.Playing);
+            inputHandler.OnPausePressed += TogglePause;
+        }
+        else
+        {
+            Debug.LogError("GameManager: PlayerInputHandler не найден в сцене!");
         }
     }
 
+    private void OnDestroy()
+    {
+        if (inputHandler != null)
+        {
+            inputHandler.OnPausePressed -= TogglePause;
+        }
+    }
+
+    private void TogglePause()
+    {
+        if (CurrentState == GameState.Playing)
+        {
+            Time.timeScale = 0f;
+            SetState(GameState.Paused);
+        }
+        else if (CurrentState == GameState.Paused)
+        {
+            Time.timeScale = 1f;
+            SetState(GameState.Playing);
+        }
+    }
 
     public void SetState(GameState newState)
     {
