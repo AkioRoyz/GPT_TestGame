@@ -145,6 +145,15 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""AimTarget"",
+                    ""type"": ""Button"",
+                    ""id"": ""48055df7-675b-4a05-be59-f650bc0d71be"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -367,6 +376,28 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
                     ""action"": ""Interact"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""00282621-1945-4107-8784-cd3d45903eb3"",
+                    ""path"": ""<Keyboard>/space"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""AimTarget"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""a8082f74-dbd5-46d5-94bd-262299ddaedd"",
+                    ""path"": ""<Gamepad>/rightShoulder"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""AimTarget"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -442,6 +473,7 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
         m_Gameplay_Dash = m_Gameplay.FindAction("Dash", throwIfNotFound: true);
         m_Gameplay_Pause = m_Gameplay.FindAction("Pause", throwIfNotFound: true);
         m_Gameplay_Interact = m_Gameplay.FindAction("Interact", throwIfNotFound: true);
+        m_Gameplay_AimTarget = m_Gameplay.FindAction("AimTarget", throwIfNotFound: true);
     }
 
     ~@PlayerInputActions()
@@ -528,6 +560,7 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
     private readonly InputAction m_Gameplay_Dash;
     private readonly InputAction m_Gameplay_Pause;
     private readonly InputAction m_Gameplay_Interact;
+    private readonly InputAction m_Gameplay_AimTarget;
     /// <summary>
     /// Provides access to input actions defined in input action map "Gameplay".
     /// </summary>
@@ -563,6 +596,10 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
         /// Provides access to the underlying input action "Gameplay/Interact".
         /// </summary>
         public InputAction @Interact => m_Wrapper.m_Gameplay_Interact;
+        /// <summary>
+        /// Provides access to the underlying input action "Gameplay/AimTarget".
+        /// </summary>
+        public InputAction @AimTarget => m_Wrapper.m_Gameplay_AimTarget;
         /// <summary>
         /// Provides access to the underlying input action map instance.
         /// </summary>
@@ -607,6 +644,9 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
             @Interact.started += instance.OnInteract;
             @Interact.performed += instance.OnInteract;
             @Interact.canceled += instance.OnInteract;
+            @AimTarget.started += instance.OnAimTarget;
+            @AimTarget.performed += instance.OnAimTarget;
+            @AimTarget.canceled += instance.OnAimTarget;
         }
 
         /// <summary>
@@ -636,6 +676,9 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
             @Interact.started -= instance.OnInteract;
             @Interact.performed -= instance.OnInteract;
             @Interact.canceled -= instance.OnInteract;
+            @AimTarget.started -= instance.OnAimTarget;
+            @AimTarget.performed -= instance.OnAimTarget;
+            @AimTarget.canceled -= instance.OnAimTarget;
         }
 
         /// <summary>
@@ -783,5 +826,12 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnInteract(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "AimTarget" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnAimTarget(InputAction.CallbackContext context);
     }
 }

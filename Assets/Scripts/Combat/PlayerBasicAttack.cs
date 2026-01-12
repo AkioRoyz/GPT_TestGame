@@ -1,54 +1,114 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 public class PlayerBasicAttack : MonoBehaviour
 {
     [Header("Attack Settings")]
     [SerializeField] private Transform attackPoint;
-    [SerializeField] private float attackRadius = 0.5f;
+    [SerializeField] private float attackRadius = 1.2f;
     [SerializeField] private LayerMask enemyLayer;
+    [SerializeField] private float aimRadius = 5f; // Радиус поиска цели при автоприцеле
 
     private PlayerInputHandler inputHandler;
-    private PlayerStats stats;
+    private PlayerStats playerStats;
 
     private Vector2 lastMoveDirection = Vector2.right;
+    private Transform currentTarget;
 
     private void Awake()
     {
         inputHandler = GetComponent<PlayerInputHandler>();
-        stats = GetComponent<PlayerStats>();
+        playerStats = GetComponent<PlayerStats>();
 
-        if (attackPoint == null)
-        {
-            Debug.LogError("AttackPoint �� �������� � PlayerBasicAttack!");
-        }
+        if (inputHandler == null)
+            Debug.LogError("PlayerInputHandler not found on Player!");
+        if (playerStats == null)
+            Debug.LogError("PlayerStats not found on Player!");
     }
 
     private void OnEnable()
     {
         if (inputHandler != null)
+        {
             inputHandler.OnAttackPressed += PerformAttack;
+            inputHandler.OnAimTarget += HandleAimInput;
+        }
     }
 
     private void OnDisable()
     {
         if (inputHandler != null)
+        {
             inputHandler.OnAttackPressed -= PerformAttack;
+            inputHandler.OnAimTarget -= HandleAimInput;
+        }
     }
 
     private void Update()
     {
-        // ��������� ��������� ����������� ��������
-        Vector2 moveInput = inputHandler.MoveInput;
+        // Сохраняем направление движения
+        Vector2 moveInput = inputHandler != null ? inputHandler.MoveInput : Vector2.zero;
         if (moveInput.sqrMagnitude > 0.01f)
-        {
             lastMoveDirection = moveInput.normalized;
-            RotateAttackPoint();
+
+        // Если удерживаем автоприцел, ищем ближайшую цель
+        if (inputHandler != null && inputHandler.IsAiming)
+        {
+            FindClosestTarget();
+        }
+        else
+        {
+            currentTarget = null;
+        }
+
+        // 🔹 Постоянное обновление направления attackPoint
+        if (attackPoint != null)
+        {
+            if (currentTarget != null)
+                attackPoint.right = (currentTarget.position - attackPoint.position).normalized;
+            else
+                attackPoint.right = lastMoveDirection;
         }
     }
 
-    private void RotateAttackPoint()
+    private void HandleAimInput(bool isPressed)
     {
-        attackPoint.localPosition = lastMoveDirection * 0.5f;
+        if (inputHandler != null)
+            inputHandler.SetAiming(isPressed); // 🔹 безопасно через метод
+
+        if (!isPressed)
+            currentTarget = null; // сброс цели
+    }
+
+    private void FindClosestTarget()
+    {
+        Collider2D[] hits = Physics2D.OverlapCircleAll(
+            transform.position,
+            aimRadius,
+            enemyLayer
+        );
+
+        float closestDist = Mathf.Infinity;
+        Transform closest = null;
+
+        foreach (Collider2D hit in hits)
+        {
+            IDamageable damageable =
+                hit.GetComponent<IDamageable>() ??
+                hit.GetComponentInParent<IDamageable>() ??
+                hit.GetComponentInChildren<IDamageable>();
+
+            if (damageable != null)
+            {
+                float dist = Vector2.Distance(transform.position, hit.transform.position);
+                if (dist < closestDist)
+                {
+                    closestDist = dist;
+                    closest = hit.transform;
+                }
+            }
+        }
+
+        currentTarget = closest;
     }
 
     private void PerformAttack()
@@ -59,7 +119,14 @@ public class PlayerBasicAttack : MonoBehaviour
             return;
 
         if (attackPoint == null)
+        {
+            Debug.LogError("AttackPoint is NOT assigned!");
             return;
+        }
+
+        // 🔹 Направление атаки уже обновляется в Update, можно оставить
+
+        int damage = playerStats.attackPower;
 
         Collider2D[] hits = Physics2D.OverlapCircleAll(
             attackPoint.position,
@@ -67,22 +134,31 @@ public class PlayerBasicAttack : MonoBehaviour
             enemyLayer
         );
 
-        foreach (var hit in hits)
+        foreach (Collider2D hit in hits)
         {
-            IDamageable damageable = hit.GetComponent<IDamageable>();
+            IDamageable damageable =
+                hit.GetComponent<IDamageable>() ??
+                hit.GetComponentInParent<IDamageable>() ??
+                hit.GetComponentInChildren<IDamageable>();
+
             if (damageable != null)
             {
-                damageable.TakeDamage(stats.attackPower);
+                Debug.Log($"HIT DAMAGEABLE: {hit.name}, Damage: {damage}");
+                damageable.TakeDamage(damage);
             }
         }
     }
 
-    // ������������ ������� ����� � Scene
     private void OnDrawGizmosSelected()
     {
-        if (attackPoint == null) return;
+        if (attackPoint != null)
+        {
+            Gizmos.color = Color.red;
+            Gizmos.DrawWireSphere(attackPoint.position, attackRadius);
+        }
 
-        Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(attackPoint.position, attackRadius);
+        // 🔹 Радиус автоприцела
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawWireSphere(transform.position, aimRadius);
     }
 }

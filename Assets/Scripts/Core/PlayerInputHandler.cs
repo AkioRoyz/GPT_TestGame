@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.InputSystem;
 using System;
 
@@ -7,13 +7,15 @@ public class PlayerInputHandler : MonoBehaviour
     private PlayerInputActions inputActions;
 
     public Vector2 MoveInput { get; private set; }
+    public bool IsAiming { get; private set; }  // теперь только для чтения
 
-    // ������� ��� ������ ������
+    // События для других систем
     public event Action OnAttackPressed;
     public event Action OnBlockPressed;
     public event Action OnDashPressed;
     public event Action OnPausePressed;
     public event Action OnInteractPressed;
+    public event Action<bool> OnAimTarget; // true = нажата, false = отпущена
 
     private void Awake()
     {
@@ -32,6 +34,10 @@ public class PlayerInputHandler : MonoBehaviour
         inputActions.Gameplay.Dash.performed += ctx => OnDashPressed?.Invoke();
         inputActions.Gameplay.Pause.performed += ctx => OnPausePressed?.Invoke();
         inputActions.Gameplay.Interact.performed += ctx => OnInteractPressed?.Invoke();
+
+        // 🔹 Автоприцел
+        inputActions.Gameplay.AimTarget.performed += ctx => OnAimTarget?.Invoke(true);
+        inputActions.Gameplay.AimTarget.canceled += ctx => OnAimTarget?.Invoke(false);
     }
 
     private void OnDisable()
@@ -47,5 +53,11 @@ public class PlayerInputHandler : MonoBehaviour
     private void OnMoveCanceled(InputAction.CallbackContext context)
     {
         MoveInput = Vector2.zero;
+    }
+
+    // 🔹 Метод для безопасного изменения состояния автоприцела
+    public void SetAiming(bool aiming)
+    {
+        IsAiming = aiming;
     }
 }
